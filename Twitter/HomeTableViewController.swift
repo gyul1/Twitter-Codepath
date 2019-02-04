@@ -9,11 +9,31 @@
 import UIKit
 
 class HomeTableViewController: UITableViewController {
+    
+    var tweetArray = [NSDictionary]()
+    var numberofTweet: Int!
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-      
+        loadTweet()
+    }
+    
+    
+    
+    func loadTweet()
+    {
+        let myUrl = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+        let myParams = ["count": 10]
+        
+        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams, success: {(tweets: [NSDictionary]) in
+            self.tweetArray.removeAll()
+            for tweet in tweets {
+                self.tweetArray.append(tweet)
+            }
+            self.tableView.reloadData()
+        }, failure: {(Error) in
+            print("Could not get tweet")
+        })
     }
 
     @IBAction func onLogout(_ sender: Any)
@@ -26,8 +46,17 @@ class HomeTableViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "tweetCell", for: indexPath) as! TweetTableViewCell
-        cell.userNameLabel.text = "name"
-        cell.tweetContentLabel.text = "this is the content"
+        
+        let user = tweetArray[indexPath.row]["user"] as! NSDictionary
+        cell.userNameLabel.text = user["name"] as? String
+        cell.tweetContentLabel.text = tweetArray[indexPath.row]["text"] as! String
+        
+        
+        let imageURL = URL(string: (user["profile_image_url_https"] as? String)!)
+        let data = try? Data(contentsOf: imageURL!)
+        
+        if let imageData = data{cell.profileImageView.image = UIImage(data:imageData)}
+        
         return cell
     }
     
@@ -42,7 +71,7 @@ class HomeTableViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return 5
+        return tweetArray.count
     }
 
   
